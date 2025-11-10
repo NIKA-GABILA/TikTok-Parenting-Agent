@@ -479,9 +479,9 @@ class ParentingBot:
         """
         await update.message.reply_text(help_text)
     
-    import asyncio
+import asyncio
 
-    async def run(self):
+async def run(self):
     """Run the bot"""
     application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
 
