@@ -481,32 +481,33 @@ class ParentingBot:
     
 import asyncio
 
-def run(self):
+async def run(self):
     """Run the bot"""
-    async def main():
-        application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
+    application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
 
-        application.add_handler(CommandHandler("start", self.start_command))
-        application.add_handler(CommandHandler("generate", self.generate_command))
-        application.add_handler(CommandHandler("stats", self.stats_command))
-        application.add_handler(CommandHandler("help", self.help_command))
-        application.add_handler(CallbackQueryHandler(self.button_callback))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text_message))
+    application.add_handler(CommandHandler("start", self.start_command))
+    application.add_handler(CommandHandler("generate", self.generate_command))
+    application.add_handler(CommandHandler("stats", self.stats_command))
+    application.add_handler(CommandHandler("help", self.help_command))
+    application.add_handler(CallbackQueryHandler(self.button_callback))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text_message))
 
-        scheduler = AsyncIOScheduler(timezone=pytz.timezone(config.TIMEZONE))
-        scheduler.add_job(
-            self.scheduled_generation,
-            'cron',
-            hour=config.GENERATION_HOUR,
-            minute=config.GENERATION_MINUTE,
-            args=[application.bot_data]
-        )
-        scheduler.start()
+    scheduler = AsyncIOScheduler(timezone=pytz.timezone(config.TIMEZONE))
+    scheduler.add_job(
+        self.scheduled_generation,
+        'cron',
+        hour=config.GENERATION_HOUR,
+        minute=config.GENERATION_MINUTE,
+        args=[application.bot_data]
+    )
+    scheduler.start()
 
-        print("🤖 Bot started!")
-        print(f"⏰ Scheduled generation: {config.GENERATION_HOUR}:{config.GENERATION_MINUTE:02d}")
-        print(f"📍 Timezone: {config.TIMEZONE}")
+    print("🤖 Bot started!")
+    print(f"⏰ Scheduled generation: {config.GENERATION_HOUR}:{config.GENERATION_MINUTE:02d}")
+    print(f"📍 Timezone: {config.TIMEZONE}")
 
-        await application.run_polling()
+    await application.run_polling()
 
-    asyncio.run(main())
+if __name__ == '__main__':
+    bot = ParentingBot()
+    asyncio.run(bot.run())
