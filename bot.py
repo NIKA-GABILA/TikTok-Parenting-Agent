@@ -479,15 +479,13 @@ class ParentingBot:
         """
         await update.message.reply_text(help_text)
     
-    import asyncio  # ჩასვი ფაილის თავში, თუ ჯერ არ არის
+import asyncio
 
 def run(self):
     """Run the bot"""
     async def main():
-        # Create application
         application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
 
-        # Add handlers
         application.add_handler(CommandHandler("start", self.start_command))
         application.add_handler(CommandHandler("generate", self.generate_command))
         application.add_handler(CommandHandler("stats", self.stats_command))
@@ -495,7 +493,6 @@ def run(self):
         application.add_handler(CallbackQueryHandler(self.button_callback))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text_message))
 
-        # Setup scheduler
         scheduler = AsyncIOScheduler(timezone=pytz.timezone(config.TIMEZONE))
         scheduler.add_job(
             self.scheduled_generation,
@@ -513,7 +510,3 @@ def run(self):
         await application.run_polling()
 
     asyncio.run(main())
-
-if __name__ == '__main__':
-    bot = ParentingBot()
-    bot.run()
