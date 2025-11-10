@@ -479,9 +479,9 @@ class ParentingBot:
         """
         await update.message.reply_text(help_text)
     
-import asyncio
+    import asyncio
 
-async def run(self):
+    async def run(self):
     """Run the bot"""
     application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
 
@@ -507,7 +507,7 @@ async def run(self):
     print(f"📍 Timezone: {config.TIMEZONE}")
 
     await application.run_polling()
-
+    
 if __name__ == '__main__':
     bot = ParentingBot()
     asyncio.run(bot.run())
