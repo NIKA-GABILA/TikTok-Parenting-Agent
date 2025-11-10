@@ -1,0 +1,24 @@
+# TikTok Parenting Agent - Dependencies
+
+# Core
+anthropic>=0.40.0
+python-telegram-bot>=20.7
+python-dotenv>=1.0.0
+
+# Image generation
+Pillow>=10.1.0
+
+# Web scraping for news
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+feedparser>=6.0.10
+
+# Scheduling
+APScheduler>=3.10.4
+
+# Data handling
+pandas>=2.1.3
+python-dateutil>=2.8.2
+
+# Utilities
+pytz>=2023.3
