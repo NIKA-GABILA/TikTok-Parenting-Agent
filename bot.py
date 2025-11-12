@@ -20,6 +20,7 @@ class ParentingBot:
         self.design_generator = DesignGenerator()
         self.news_tracker = NewsTracker()
         self.current_variants = {}
+        self.scheduler = None
         self.load_stats()
     
     def load_stats(self):
@@ -58,7 +59,6 @@ class ParentingBot:
 /generate - ახალი კონტენტის გენერაცია
 /stats - სტატისტიკა
 /help - დახმარება
-/settings - პარამეტრები
 
 {config.BRANDING}
         """
@@ -136,7 +136,6 @@ class ParentingBot:
         for idx, variant in enumerate(variants, 1):
             try:
                 # Generate image
-                style = config.VISUAL_STYLE_DISTRIBUTION
                 img = self.design_generator.generate_image(variant)
                 
                 filename = f"{session_id}_variant_{idx}.png"
@@ -159,7 +158,6 @@ class ParentingBot:
                     )
                 
                 # Store variant for later reference
-                variant_id = f"{chat_id}_{idx}"
                 self.current_variants[chat_id][idx] = {
                     'content': variant,
                     'filepath': filepath,
@@ -287,8 +285,6 @@ class ParentingBot:
         await query.message.reply_text("⏳ ვქმნი ახალ ვერსიას...")
         
         if chat_id in self.current_variants and variant_idx in self.current_variants[chat_id]:
-            original = self.current_variants[chat_id][variant_idx]['content']
-            
             # Generate new version
             new_content = self.content_creator.generate_content_ideas(count=1)[0]
             
@@ -326,7 +322,7 @@ class ParentingBot:
             f"✏️ რედაქტირება ვარიანტი {variant_idx}:\n\n"
             "დაწერე როგორ უნდა შევცვალო:\n"
             "მაგ: 'უფრო მარტივი ენით' ან 'დაამატე კონკრეტული მაგალითი'\n\n"
-            f"პასუხში დაწერე: edit{variant_idx} თენი კომენტარი"
+            f"პასუხში დაწერე: edit{variant_idx} შენი კომენტარი"
         )
     
     async def _handle_style_change(self, query, data, chat_id, context):
@@ -342,7 +338,7 @@ class ParentingBot:
         
         # Get different style
         current_styles = list(config.VISUAL_STYLE_DISTRIBUTION.keys())
-        new_style = current_styles[(current_styles.index('minimalist') + 1) % len(current_styles)]
+        new_style = current_styles[0]
         
         await query.message.reply_text(f"🎨 ვცვლი სტილს... ახალი: {new_style}")
         
@@ -458,7 +454,6 @@ class ParentingBot:
 /generate - ახალი კონტენტის გენერაცია
 /stats - სტატისტიკა
 /help - ეს დახმარება
-/settings - პარამეტრები
 
 💡 როგორ გამოვიყენო:
 
@@ -479,35 +474,42 @@ class ParentingBot:
         """
         await update.message.reply_text(help_text)
     
-import asyncio
-
-async def run(self):
-    """Run the bot"""
-    application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
-
-    application.add_handler(CommandHandler("start", self.start_command))
-    application.add_handler(CommandHandler("generate", self.generate_command))
-    application.add_handler(CommandHandler("stats", self.stats_command))
-    application.add_handler(CommandHandler("help", self.help_command))
-    application.add_handler(CallbackQueryHandler(self.button_callback))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text_message))
-
-    scheduler = AsyncIOScheduler(timezone=pytz.timezone(config.TIMEZONE))
-    scheduler.add_job(
-        self.scheduled_generation,
-        'cron',
-        hour=config.GENERATION_HOUR,
-        minute=config.GENERATION_MINUTE,
-        args=[application.bot_data]
-    )
-    scheduler.start()
-
-    print("🤖 Bot started!")
-    print(f"⏰ Scheduled generation: {config.GENERATION_HOUR}:{config.GENERATION_MINUTE:02d}")
-    print(f"📍 Timezone: {config.TIMEZONE}")
-
-    await application.run_polling()
+    async def post_init(self, application: Application):
+        """Initialize scheduler after application is fully started"""
+        # Setup scheduler AFTER event loop is running
+        self.scheduler = AsyncIOScheduler(timezone=pytz.timezone(config.TIMEZONE))
+        self.scheduler.add_job(
+            self.scheduled_generation,
+            'cron',
+            hour=config.GENERATION_HOUR,
+            minute=config.GENERATION_MINUTE,
+            args=[application]
+        )
+        self.scheduler.start()
+        print(f"⏰ Scheduler started - Daily generation at {config.GENERATION_HOUR}:{config.GENERATION_MINUTE:02d}")
     
+    def run(self):
+        """Run the bot"""
+        # Create application
+        application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
+        
+        # Add handlers
+        application.add_handler(CommandHandler("start", self.start_command))
+        application.add_handler(CommandHandler("generate", self.generate_command))
+        application.add_handler(CommandHandler("stats", self.stats_command))
+        application.add_handler(CommandHandler("help", self.help_command))
+        application.add_handler(CallbackQueryHandler(self.button_callback))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_text_message))
+        
+        # Register post_init to start scheduler after event loop is ready
+        application.post_init = self.post_init
+        
+        # Run bot
+        print("🤖 Bot started!")
+        print(f"📍 Timezone: {config.TIMEZONE}")
+        
+        application.run_polling()
+
 if __name__ == '__main__':
     bot = ParentingBot()
-    asyncio.run(bot.run())
+    bot.run()
