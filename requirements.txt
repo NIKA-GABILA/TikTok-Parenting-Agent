@@ -1,16 +1,22 @@
-# Core dependencies
+# Core AI and Bot
 anthropic>=0.40.0
 python-telegram-bot>=20.7
+
+# Image processing
 pillow>=10.0.0
+
+# Time and scheduling
 pytz>=2023.3
 apscheduler>=3.10.4
 
-# Web requests and scraping (for news tracking)
+# Web requests, scraping, and RSS feeds
 requests>=2.31.0
 beautifulsoup4>=4.12.0
+lxml>=4.9.0
+feedparser>=6.0.0
 
-# Web server for health check (Render compatibility)
+# Web server (health check)
 aiohttp>=3.9.0
 
-# Optional but recommended
+# Environment variables
 python-dotenv>=1.0.0
