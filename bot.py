@@ -1,5 +1,6 @@
 """
 Telegram Bot - Main interface for TikTok Parenting Agent
+With Health Check Web Server for Render deployment
 """
 import os
 import json
@@ -8,6 +9,8 @@ import pytz
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from aiohttp import web
+import asyncio
 
 import config
 from content_creator import ContentCreator
@@ -488,6 +491,23 @@ class ParentingBot:
         self.scheduler.start()
         print(f"⏰ Scheduler started - Daily generation at {config.GENERATION_HOUR}:{config.GENERATION_MINUTE:02d}")
     
+    async def health_check(self, request):
+        """Health check endpoint for Render"""
+        return web.Response(text="OK", status=200)
+    
+    async def start_web_server(self):
+        """Start simple web server for health checks"""
+        app = web.Application()
+        app.router.add_get('/', self.health_check)
+        app.router.add_get('/health', self.health_check)
+        
+        port = int(os.environ.get('PORT', 10000))
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, '0.0.0.0', port)
+        await site.start()
+        print(f"🌐 Health check server started on port {port}")
+    
     def run(self):
         """Run the bot"""
         # Create application
@@ -503,6 +523,9 @@ class ParentingBot:
         
         # Register post_init to start scheduler after event loop is ready
         application.post_init = self.post_init
+        
+        # Start health check web server
+        asyncio.get_event_loop().create_task(self.start_web_server())
         
         # Run bot
         print("🤖 Bot started!")
