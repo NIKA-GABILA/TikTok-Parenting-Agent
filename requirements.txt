@@ -5,6 +5,9 @@ pillow>=10.0.0
 pytz>=2023.3
 apscheduler>=3.10.4
 
+# Web requests (for news tracking)
+requests>=2.31.0
+
 # Web server for health check (Render compatibility)
 aiohttp>=3.9.0
 
